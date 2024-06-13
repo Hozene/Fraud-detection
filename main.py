@@ -12,6 +12,9 @@ class FraudDetection:
 
     def preprocess_data(self):
         self.original_types = self.data["type"].copy()  # Keeping a copy of the original 'type' column for plotting
+        self.data.fillna(self.data.median(), inplace=True)
+        self.data['balanceDiff'] = self.data['newbalanceOrig'] - self.data['oldbalanceOrg']
+
         self.data["type"] = self.data["type"].map({
             "CASH_OUT": 1,
             "PAYMENT": 2,
@@ -23,6 +26,22 @@ class FraudDetection:
             0: "Not Fraud",
             1: "Fraud"
         })
+
+    def analyze_feature_importance(self):
+        feature_importances = self.model.feature_importances_
+        features = ["type", "amount", "oldbalanceOrg", "newbalanceOrig", "balanceDiff"]
+        importance_df = pd.DataFrame({
+            'Feature': features,
+            'Importance': feature_importances
+        }).sort_values(by='Importance', ascending=False)
+
+        plt.figure(figsize=(10, 6))
+        plt.bar(importance_df['Feature'], importance_df['Importance'])
+        plt.title('Feature Importance')
+        plt.xlabel('Feature')
+        plt.ylabel('Importance')
+        plt.show()
+
 
     def plot_transaction_types(self):
         type_counts = self.original_types.value_counts()
