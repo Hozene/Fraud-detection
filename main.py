@@ -12,7 +12,6 @@ class FraudDetection:
 
     def preprocess_data(self):
         self.original_types = self.data["type"].copy()  # Keeping a copy of the original 'type' column for plotting
-        self.data.fillna(self.data.median(), inplace=True)
         self.data['balanceDiff'] = self.data['newbalanceOrig'] - self.data['oldbalanceOrg']
 
         self.data["type"] = self.data["type"].map({
