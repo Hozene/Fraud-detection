@@ -2,25 +2,26 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, export_graphviz
+import tkinter as tk
+from tkinter import ttk, messagebox
 
 
 class FraudDetection:
     def __init__(self, csv_path):
         self.data = pd.read_csv(csv_path)
         self.model = DecisionTreeClassifier()
-
-    def preprocess_data(self):
-        self.original_types = self.data["type"].copy()  # Keeping a copy of the original 'type' column for plotting
-        self.data['balanceDiff'] = self.data['newbalanceOrig'] - self.data['oldbalanceOrg']
-
-        self.data["type"] = self.data["type"].map({
+        self.type_mapping = {
             "CASH_OUT": 1,
             "PAYMENT": 2,
             "CASH_IN": 3,
             "TRANSFER": 4,
             "DEBIT": 5
-        })
+        }
+
+    def preprocess_data(self):
+        self.original_types = self.data["type"].copy()  # Keeping a copy of the original 'type' column for plotting
+        self.data["type"] = self.data["type"].map(self.type_mapping)
         self.data["isFraud"] = self.data["isFraud"].map({
             0: "Not Fraud",
             1: "Fraud"
@@ -28,7 +29,7 @@ class FraudDetection:
 
     def analyze_feature_importance(self):
         feature_importances = self.model.feature_importances_
-        features = ["type", "amount", "oldbalanceOrg", "newbalanceOrig", "balanceDiff"]
+        features = ["type", "amount", "oldbalanceOrg", "newbalanceOrig"]
         importance_df = pd.DataFrame({
             'Feature': features,
             'Importance': feature_importances
@@ -73,6 +74,57 @@ class FraudDetection:
         print(f"Prediction: {prediction[0]}")
         return prediction[0]
 
+    def create_ui(self):
+        def predict_transaction():
+            try:
+                transaction_type = transaction_type_var.get()
+                amount = float(amount_var.get())
+                old_balance = float(old_balance_var.get())
+
+                if transaction_type not in self.type_mapping:
+                    raise ValueError("Unknown transaction type selected.")
+
+                if transaction_type in ["CASH_OUT", "TRANSFER", "DEBIT"]:
+                    new_balance = old_balance - amount
+                elif transaction_type in ["CASH_IN", "PAYMENT"]:
+                    new_balance = old_balance + amount
+
+                features = [[self.type_mapping[transaction_type], amount, old_balance, new_balance]]
+                result = self.predict(features)
+                messagebox.showinfo("Prediction Result", f"The transaction is {result}.")
+            except ValueError as e:
+                messagebox.showerror("Error", str(e))
+
+        root = tk.Tk()
+        root.title("Fraud Detection")
+
+        style = ttk.Style()
+        style.configure('TLabel', font=('Arial', 12))
+        style.configure('TButton', font=('Arial', 12))
+
+        frame = ttk.Frame(root, padding=(20, 10))
+        frame.grid(row=0, column=0, sticky='nsew')
+
+        ttk.Label(frame, text="Transaction Type:", style='TLabel').grid(row=0, column=0, padx=10, pady=5, sticky='w')
+        transaction_type_var = tk.StringVar()
+        transaction_type_menu = ttk.OptionMenu(frame, transaction_type_var, "", *self.type_mapping.keys())
+        transaction_type_menu.grid(row=0, column=1, padx=10, pady=5, sticky='w')
+
+        ttk.Label(frame, text="Amount:", style='TLabel').grid(row=1, column=0, padx=10, pady=5, sticky='w')
+        amount_var = tk.StringVar()
+        ttk.Entry(frame, textvariable=amount_var).grid(row=1, column=1, padx=10, pady=5, sticky='w')
+
+        ttk.Label(frame, text="Old Balance:", style='TLabel').grid(row=2, column=0, padx=10, pady=5, sticky='w')
+        old_balance_var = tk.StringVar()
+        ttk.Entry(frame, textvariable=old_balance_var).grid(row=2, column=1, padx=10, pady=5, sticky='w')
+
+        ttk.Button(root, text="Predict", command=predict_transaction, style='TButton').grid(row=1, column=0, padx=20, pady=10)
+
+        frame.rowconfigure(0, weight=1)
+        frame.columnconfigure(1, weight=1)
+
+        root.mainloop()
+
 
 if __name__ == '__main__':
     fraud_detection = FraudDetection("csv/onlinefraud.csv")
@@ -81,3 +133,5 @@ if __name__ == '__main__':
     fraud_detection.train_model()
     features = [[4, 9000.60, 9000.60, 0.0]]
     fraud_detection.predict(features)
+    fraud_detection.analyze_feature_importance()
+    fraud_detection.create_ui()
