@@ -14,7 +14,8 @@ The following Python packages are required to run the script:
 - numpy
 - matplotlib
 - scikit-learn
+- tkinter (for graphical user interface)
 
 You can install these packages using pip:
 ```bash
-pip install pandas numpy matplotlib scikit-learn
+pip install pandas numpy matplotlib scikit-learn tk
