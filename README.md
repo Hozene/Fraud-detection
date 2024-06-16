@@ -15,7 +15,11 @@ The following Python packages are required to run the script:
 - matplotlib
 - scikit-learn
 - tkinter (for graphical user interface)
+- Graphviz
 
 You can install these packages using pip:
 ```bash
-pip install pandas numpy matplotlib scikit-learn tk
+pip install pandas numpy matplotlib scikit-learn tk graphviz
+```
+
+Ensure that Graphviz is properly installed and added to your system's PATH to enable decision tree plotting.
