@@ -1,11 +1,14 @@
+import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier, export_graphviz
+from sklearn.cluster import KMeans
 import tkinter as tk
 from tkinter import ttk, messagebox
 import graphviz
+os.environ["LOKY_MAX_CPU_COUNT"] = "4"  # Replace "4" with the number of cores you have
 
 
 class FraudDetection:
@@ -59,6 +62,23 @@ class FraudDetection:
         plt.setp(autotexts, size=10, weight="bold")
         ax.set_title("Transaction Types Distribution")
         plt.show()
+
+    def plot_clusters(self):
+        transaction_types = self.original_types.unique()
+        for transaction_type in transaction_types:
+            type_data = self.data[self.original_types == transaction_type]
+            features = type_data[["amount", "oldbalanceOrg"]].values
+            if len(features) > 1000:  # Limit the number of data points for clustering
+                features = features[:1000]
+            kmeans = KMeans(n_clusters=3, random_state=42).fit(features)
+            clusters = kmeans.predict(features)
+
+            plt.figure(figsize=(8, 6))
+            plt.scatter(features[:, 0], features[:, 1], c=clusters, cmap='viridis')
+            plt.xlabel('Amount')
+            plt.ylabel('Old Balance')
+            plt.title(f'Clustering of Transaction Amounts for Type {transaction_type}')
+            plt.show()
 
     def plot_decision_tree(self):
         dot_data = export_graphviz(self.model, out_file=None,
@@ -146,9 +166,10 @@ if __name__ == '__main__':
     fraud_detection = FraudDetection("csv/onlinefraud.csv")
     fraud_detection.preprocess_data()
     fraud_detection.plot_transaction_types()
+    fraud_detection.plot_clusters()
     fraud_detection.train_model()
     features = [[4, 9000.60, 9000.60, 0.0]]
     fraud_detection.predict(features)
     fraud_detection.analyze_feature_importance()
     # fraud_detection.plot_decision_tree()
-    fraud_detection.create_ui()
+    # fraud_detection.create_ui()
