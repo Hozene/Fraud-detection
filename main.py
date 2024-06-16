@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier, export_graphviz
 import tkinter as tk
 from tkinter import ttk, messagebox
+import graphviz
 
 
 class FraudDetection:
@@ -59,6 +60,14 @@ class FraudDetection:
         ax.set_title("Transaction Types Distribution")
         plt.show()
 
+    def plot_decision_tree(self):
+        dot_data = export_graphviz(self.model, out_file=None,
+                                   feature_names=["type", "amount", "oldbalanceOrg", "newbalanceOrig"],
+                                   class_names=["Not Fraud", "Fraud"],
+                                   filled=True, rounded=True, special_characters=True)
+        graph = graphviz.Source(dot_data, format='svg')
+        graph.render('decision_tree', format='svg', view=True)
+
     def train_model(self):
         x = np.array(self.data[["type", "amount", "oldbalanceOrg", "newbalanceOrig"]])
         y = np.array(self.data[["isFraud"]])
@@ -95,6 +104,12 @@ class FraudDetection:
             except ValueError as e:
                 messagebox.showerror("Error", str(e))
 
+        def plot_decision_tree_wrapper():
+            try:
+                self.plot_decision_tree()
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to plot Decision Tree: {str(e)}")
+
         root = tk.Tk()
         root.title("Fraud Detection")
 
@@ -114,11 +129,12 @@ class FraudDetection:
         amount_var = tk.StringVar()
         ttk.Entry(frame, textvariable=amount_var).grid(row=1, column=1, padx=10, pady=5, sticky='w')
 
-        ttk.Label(frame, text="Old Balance:", style='TLabel').grid(row=2, column=0, padx=10, pady=5, sticky='w')
+        ttk.Label(frame, text="Account Balance:", style='TLabel').grid(row=2, column=0, padx=10, pady=5, sticky='w')
         old_balance_var = tk.StringVar()
         ttk.Entry(frame, textvariable=old_balance_var).grid(row=2, column=1, padx=10, pady=5, sticky='w')
 
         ttk.Button(root, text="Predict", command=predict_transaction, style='TButton').grid(row=1, column=0, padx=20, pady=10)
+        ttk.Button(root, text="Plot Decision Tree", command=plot_decision_tree_wrapper, style='TButton').grid(row=2, column=0, padx=20, pady=10)
 
         frame.rowconfigure(0, weight=1)
         frame.columnconfigure(1, weight=1)
@@ -134,4 +150,5 @@ if __name__ == '__main__':
     features = [[4, 9000.60, 9000.60, 0.0]]
     fraud_detection.predict(features)
     fraud_detection.analyze_feature_importance()
+    # fraud_detection.plot_decision_tree()
     fraud_detection.create_ui()
