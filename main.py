@@ -1,11 +1,14 @@
+import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier, export_graphviz
+from sklearn.metrics import classification_report, ConfusionMatrixDisplay, confusion_matrix
 import tkinter as tk
 from tkinter import ttk, messagebox
 import graphviz
+os.environ["LOKY_MAX_CPU_COUNT"] = "4"  # Replace "4" with the number of cores you have
 
 
 class FraudDetection:
@@ -72,11 +75,20 @@ class FraudDetection:
         x = np.array(self.data[["type", "amount", "oldbalanceOrg", "newbalanceOrig"]])
         y = np.array(self.data[["isFraud"]])
 
-        xtrain, xtest, ytrain, ytest = train_test_split(x, y, test_size=0.1, random_state=42)
+        xtrain, self.xtest, ytrain, self.ytest = train_test_split(x, y, test_size=0.1, random_state=42)
         self.model.fit(xtrain, ytrain)
 
-        score = self.model.score(xtest, ytest)
+        score = self.model.score(self.xtest, self.ytest)
         print(f"Model Accuracy: {score}")
+        print(f"Classification report:\n {classification_report(self.ytest, self.model.predict(self.xtest))}")
+
+    def confusion_matrix(self):
+        y_pred = self.model.predict(self.xtest)
+        cm = confusion_matrix(self.ytest, y_pred, labels=["Not Fraud", "Fraud"])
+        disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=["Not Fraud", "Fraud"])
+        disp.plot(cmap='Blues')
+        plt.title('Confusion Matrix')
+        plt.show()
 
     def predict(self, features):
         prediction = self.model.predict(np.array(features).reshape(1, -1))
@@ -143,12 +155,13 @@ class FraudDetection:
 
 
 if __name__ == '__main__':
-    fraud_detection = FraudDetection("csv/onlinefraud.csv")
+    fraud_detection = FraudDetection("csv/onlinefraud.csv")  # Change to your csv location
     fraud_detection.preprocess_data()
     fraud_detection.plot_transaction_types()
     fraud_detection.train_model()
-    features = [[4, 9000.60, 9000.60, 0.0]]
-    fraud_detection.predict(features)
+    fraud_detection.confusion_matrix()
+    # features = [[4, 9000.60, 9000.60, 0.0]]
+    # fraud_detection.predict(features)
     fraud_detection.analyze_feature_importance()
     # fraud_detection.plot_decision_tree()
     fraud_detection.create_ui()
