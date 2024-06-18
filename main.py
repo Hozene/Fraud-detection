@@ -90,6 +90,17 @@ class FraudDetection:
         plt.title('Confusion Matrix')
         plt.show()
 
+    def plot_top_recipients_in_fraud(self):
+        fraud_data = self.data[self.data["isFraud"] == "Fraud"]
+        top_recipients = fraud_data["nameDest"].value_counts().head(10)
+        plt.figure(figsize=(12, 8))
+        top_recipients.plot(kind='bar', color='lightblue')
+        plt.title('Top 10 Recipients Highly Involved in Fraud')
+        plt.xlabel('Recipient')
+        plt.ylabel('Number of Fraudulent Transactions')
+        plt.xticks(rotation=45)
+        plt.show()
+
     def predict(self, features):
         prediction = self.model.predict(np.array(features).reshape(1, -1))
         print(f"Prediction: {prediction[0]}")
@@ -160,6 +171,7 @@ if __name__ == '__main__':
     fraud_detection.plot_transaction_types()
     fraud_detection.train_model()
     fraud_detection.confusion_matrix()
+    fraud_detection.plot_top_recipients_in_fraud()
     # features = [[4, 9000.60, 9000.60, 0.0]]
     # fraud_detection.predict(features)
     fraud_detection.analyze_feature_importance()
